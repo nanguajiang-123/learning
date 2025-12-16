@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+tortoise-orm[asyncpg]
+pydantic
+python-dotenv
+openai
+requests

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>跨域测试</title>
+</head>
+<body>
+    <h1>Hello World</h1>
+    <div id="result"></div>
+
+    <script>
+        fetch('http://localhost:8000/user')
+            .then(r => r.json())
+            .then(d => document.getElementById('result').innerText = JSON.stringify(d))
+            .catch(e => document.getElementById('result').innerText = '跨域请求失败: ' + e.message);
+    </script>
+</body>
+</html>

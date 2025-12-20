@@ -45,24 +45,20 @@ async def get_course_students(course_id: int, user: dict = Depends(get_current_u
 
 #学生选课
 @course_router.post("/enroll/{course_id}")
-async def enroll_in_course(course_id: int, user: dict = Depends(get_current_user)):
-    user_id = user.get("user_id")
-    try:
-        # sub 可以是 email 或 id（字符串），尝试按 email 查找，否则按 id 查找
-        if "@" in user_id:
-            student = await Student.get(email=user_id)
-        else:
-            student = await Student.get(id=int(user_id))
-    except DoesNotExist:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+async def enroll_in_course(course_id: int, current_user: Student = Depends(get_current_user)):
+    """学生选课：使用当前认证的 Student 对象（避免对 dict 的依赖）"""
+    student = current_user
 
     try:
         course_obj = await Course.get(id=course_id)
     except DoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
 
-    # 将学生添加到课程的学生列表中
-    await course_obj.students.add(student)
+    # 如果已经选过，返回 400
+    exists = await student.courses.filter(id=course_obj.id).exists()
+    if exists:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already enrolled in this course")
+
     await student.courses.add(course_obj)
 
     return {"message": f"Enrolled in course {course_obj.title} successfully."}
@@ -70,24 +66,20 @@ async def enroll_in_course(course_id: int, user: dict = Depends(get_current_user
 
 #学生退课
 @course_router.post("/drop/{course_id}")
-async def drop_course(course_id: int, user: dict = Depends(get_current_user)):
-    user_id = user.get("user_id")
-    try:
-        # sub 可以是 email 或 id（字符串），尝试按 email 查找，否则按 id 查找
-        if "@" in user_id:
-            student = await Student.get(email=user_id)
-        else:
-            student = await Student.get(id=int(user_id))
-    except DoesNotExist:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+async def drop_course(course_id: int, current_user: Student = Depends(get_current_user)):
+    """学生退课：使用当前认证的 Student 对象"""
+    student = current_user
 
     try:
         course_obj = await Course.get(id=course_id)
     except DoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
 
-    # 将学生从课程的学生列表中移除
-    await course_obj.students.remove(student)
+    # 如果学生未选此课，返回 400
+    exists = await student.courses.filter(id=course_obj.id).exists()
+    if not exists:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Not enrolled in this course")
+
     await student.courses.remove(course_obj)
 
     return {"message": f"Dropped course {course_obj.title} successfully."}
@@ -96,7 +88,9 @@ async def drop_course(course_id: int, user: dict = Depends(get_current_user)):
 #管理员添加新课程
 @course_router.post("/add")
 async def add_course(title: str, description: str, credits: int, user: dict = Depends(get_admin_user)):
-
+    course=await Course.filter(title=title).first()
+    if course:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Course with this title already exists")
     new_course = await Course.create(
         title=title,
         description=description,

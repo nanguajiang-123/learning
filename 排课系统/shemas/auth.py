@@ -12,6 +12,7 @@ class SignUpModel(BaseModel):
     repeat_password: str
     email: EmailStr
     code: str
+    grade: int 
 
 class SignInModel(BaseModel):
     username: str

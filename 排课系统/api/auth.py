@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 import random
 import string
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from tortoise.exceptions import DoesNotExist
 from passlib.context import CryptContext
 from starlette.concurrency import run_in_threadpool
@@ -12,6 +12,7 @@ from models.student import Student
 from core.security import create_access_token
 from api.helpter.deps import get_current_user
 from tortoise.transactions import in_transaction
+from pydantic import EmailStr
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -22,9 +23,9 @@ def generate_verification_code():
    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
 @auth_router.post("/send_code")
-async def send_verification_code(req: int):
+async def send_verification_code(req: EmailStr):
     code = generate_verification_code()
-    sent_at = datetime.utcnow()
+    sent_at = datetime.now(timezone.utc)
 
     # 使用 Tortoise ORM 的事务确保原子更新/创建
     async with in_transaction() as conn:
@@ -54,7 +55,7 @@ async def sign_up(signup_data: SignUpModel):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # 验证码有效期 10 分钟
-    if not u.code or u.code != signup_data.code or not u.code_sent_at or (datetime.utcnow() - u.code_sent_at) > timedelta(minutes=1):
+    if not u.code or u.code != signup_data.code or not u.code_sent_at or (datetime.now(timezone.utc) - u.code_sent_at) > timedelta(minutes=1):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification code")
 
     # 哈希密码（在线程池中运行以避免阻塞事件循环）
@@ -63,12 +64,12 @@ async def sign_up(signup_data: SignUpModel):
     student, created = await Student.get_or_create(email=signup_data.email, defaults={
         "name": signup_data.username,
         "password_hash": hashed,
-        "code_sent_at": u.code_sent_at
+        "code_sent_at": u.code_sent_at,
+        "grade": signup_data.grade
     })
     if not created:
         student.name = signup_data.username
         student.password_hash = hashed
-        student.code_sent_at = u.code_sent_at
         await student.save()
 
     # 验证通过后清除 user 表中的验证码
@@ -117,7 +118,7 @@ async def forgot_password(req:SignUpModel):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # 验证码有效期 10 分钟
-    if not student.code or student.code != req.code or not student.code_sent_at or (datetime.utcnow() - student.code_sent_at) > timedelta(minutes=10):
+    if not student.code or student.code != req.code or not student.code_sent_at or (datetime.now(timezone.utc) - student.code_sent_at) > timedelta(minutes=10):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification code")
 
     if req.new_password != req.repeat_password:

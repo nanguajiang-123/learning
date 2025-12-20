@@ -31,7 +31,7 @@ register_tortoise(
     app,
     db_url=settings.get_database_url(),
     modules={"models": ["models.student", "models.course", "models.auth"]},
-    generate_schemas=False,  # 开发时可设为 True
+    generate_schemas=True,  # 开发时可设为 True
     add_exception_handlers=True,
 )
 

@@ -95,7 +95,7 @@ async def sign_in(form_data: OAuth2PasswordRequestForm = Depends()):
 
     # Create JWT access token
     subject = student.email if student.email else str(student.id)
-    access_token = create_access_token({"sub": subject})
+    access_token = create_access_token(subject)
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -144,16 +144,9 @@ async def forgot_password(req:SignUpModel):
 
 #查询所有课程
 @auth_router.get("/")
-async def read_courses(user: dict = Depends(get_current_user)):
-    user_id = user.get("user_id")
-    try:
-        # sub 可以是 email 或 id（字符串），尝试按 email 查找，否则按 id 查找
-        if "@" in user_id:
-            student = await Student.get(email=user_id)
-        else:
-            student = await Student.get(id=int(user_id))
-    except DoesNotExist:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+async def read_courses(current_user: Student = Depends(get_current_user)):
+    # current_user 已由依赖解析为 Student 对象（或抛出 401）
+    student = current_user
 
     # 获取该学生的所有课程（反向关系 related_name='courses'）
     courses = await student.courses.all()
@@ -162,7 +155,7 @@ async def read_courses(user: dict = Depends(get_current_user)):
         for c in courses
     ]
 
-    return {"user_id": user_id, "courses": course_list}
+    return {"user_id": student.id, "email": student.email, "courses": course_list}
 
 
 

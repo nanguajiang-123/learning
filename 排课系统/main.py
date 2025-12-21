@@ -4,6 +4,12 @@ from core.config import settings
 from api.auth import auth_router
 from api.course import course_router
 from tortoise.contrib.fastapi import register_tortoise
+from tortoise import Tortoise
+
+import logging
+# Minimal logger (verbose logging removed per request)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 app = FastAPI(title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json")
 

@@ -9,6 +9,7 @@ from models.course import Course
 from api.helpter.schedule import has_conflict
 from typing import List
 import logging
+from api.ai import get_answer
 
 course_router = APIRouter(prefix="/course", tags=["course"])
 
@@ -71,15 +72,35 @@ async def enroll_in_course(course_id: int, current_user: Student = Depends(get_c
     # 检查与学生已选课程是否有时间冲突
     target_sched = course_obj.schedule
     conflicts = []
+    recommendations = []
     if target_sched:
         course: List[Course] = await student.courses.all()
         for c in course:
             if c.schedule and has_conflict(target_sched, c.schedule):
                 conflicts.append({"course_id": c.id, "title": c.title, "schedule": c.schedule})
-        if conflicts:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"message": "Schedule conflict", "conflicts": conflicts})
+                if conflicts:
+                    #筛选同名或同教师的课程作为推荐
+                    course_recommendations1 : List[Course]=await Course.filter(title=course_obj.title).exclude(id__in=[c["course_id"] for c in conflicts]).all()
+                    for rec in course_recommendations1:
+                        if not has_conflict(target_sched, rec.schedule):
+                            recommendations.append({"course_id": rec.id, "title": rec.title, "schedule": rec.schedule})
+                    course_recommendations2 : List[Course]=await Course.filter(teacher=course_obj.teacher).exclude(title=course_obj.title).all()        
+                    for rec in course_recommendations2:
+                        if not has_conflict(target_sched, rec.schedule):
+                            recommendations.append({"course_id": rec.id, "title": rec.title, "schedule": rec.schedule}) 
+                    answer=get_answer(f"学生选课时遇到时间冲突，已选课程：{conflicts}。请推荐一些可选课程：{recommendations}。请给出简短建议。")
+                    if not recommendations:
+                        #如无同名或同教师课程，推荐所有无冲突课程
+                        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"message": "Schedule conflict", "conflicts": conflicts})
+                    return {
+                        "message": "Schedule conflict detected",
+                        "conflicts": conflicts,
+                        "recommendations": answer
+                    }
 
-    # 如果已经选过，返回 400
+                    
+    
+        # 如果已经选过，返回 400
     exists = await student.courses.filter(id=course_obj.id).exists()
     if exists:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already enrolled in this course")
@@ -87,6 +108,10 @@ async def enroll_in_course(course_id: int, current_user: Student = Depends(get_c
     await student.courses.add(course_obj)
 
     return {"message": f"Enrolled in course {course_obj.title} successfully."}
+
+
+
+
 
 
 

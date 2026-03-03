@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS选择器</title>
+    <style>
+        h2{
+            color: brown;
+        }
+        .helight{
+            background-color: aqua;
+        }
+        #id{
+            font-size: large;
+        }
+        *{
+            font-family: 'KaiTi';
+        }
+        .father > .son{
+            color: green;
+        }
+        .father p{
+            color: blue;
+        }
+        h3+p{
+            background-color: cadetblue;
+        }
+        #element:hover{
+            background-color: bisque;
+        }
+    </style>
+</head>
+<body>
+    <h1>不同类型的选择器</h1>
+    <h2>这是一个元素选择器</h2>
+    <h3 class="helight">这是一个类选择器</h3>
+    <h3>这是一个类选择器</h3>
+    <h4 id="id">这是一个id选择器</h4>
+    <div class="father">
+        <p class="son">这是一个子元素选择器</p>
+        <div>
+            <p class="grandson">这是一个后代选择器</p>
+        </div>
+    </div>
+    <p>这是一个普通的p标签</p>
+    <h3>这是一个相邻兄弟选择器</h3>
+    <p>这是另一个p标签</p>
+
+    <h1 id="element">这是一个伪类选择器</h1>
+</body>
+</html>

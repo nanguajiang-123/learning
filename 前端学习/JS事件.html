@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS事件</title>
+</head>
+<body>
+    <button onclick="handleClick()">这是一个点击事件按钮</button>
+    <input type="text" oninput="console.log('输入内容：' + this.value)" onfocus="focus_event()" onblur="blur_event()">
+    <button name="button">点击按钮</button>
+    <script>
+        function handleClick(){
+            alert("按钮被点击了！");
+        }
+        function focus_event(){
+            console.log("输入框获得焦点");
+        }
+        function blur_event(){
+            console.log("输入框失去焦点");
+        }
+        var button_1 = document.getElementsByName("button")[0];
+        console.log(button_1);
+        /* button_1.onclick = function() {
+            alert("这是一个通过JavaScript添加的点击事件");
+        } */
+
+
+        button_1.addEventListener("click", function() {
+            alert("这是一个通过addEventListener添加的点击事件");
+        });
+    </script>
+
+    
+</body>
+</html>

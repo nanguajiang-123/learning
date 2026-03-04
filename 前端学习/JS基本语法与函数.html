@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS基本语法</title>
+</head>
+<body>
+    <script>
+        var name = "JavaScript,var声明变量具有函数作用域";
+        const pi = 3.14;
+        let age = 25;
+        console.log(name,pi,age);
+        for(let i=0;i<5;i++){
+            console.log(i);
+        }
+        while(age < 30){
+            console.log(age);
+            age++;
+        }
+        function greet(){
+            console.log("Hello, World!");
+        }
+        greet();
+        function add(a,b){
+            return a + b;
+        }
+        console.log(add(5,10));
+    </script>
+</body>
+</html>

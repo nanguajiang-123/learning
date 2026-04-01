@@ -16,7 +16,7 @@ import (
 )
 
 // getCurrentUser 从 Authorization: Bearer <token> 中解析 JWT，返回当前用户
-func getCurrentUser(c *gin.Context) (models.User, error) {
+func GetCurrentUser(c *gin.Context) (models.User, error) {
 	var zero models.User
 	auth := c.GetHeader("Authorization")
 	if auth == "" {

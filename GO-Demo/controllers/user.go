@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 
 	"gin-ranking/core"
 	"gin-ranking/dependence"
@@ -100,4 +101,51 @@ func (u UserController) UpdateUser(c *gin.Context) {
 	}
 	logrus.Debugf("更新用户成功，ID: %d", id)
 	ReturnSuccess(c, http.StatusOK, "更新用户成功", id)
+}
+
+// LogoutUser validates JWT, checks the requested user id, then deletes related data.
+func (u UserController) LogoutUser(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id <= 0 {
+		logrus.Debugf("logout rejected: invalid user id, raw=%q", idStr)
+		ReturnError(c, 1, "无效的用户ID")
+		return
+	}
+
+	currentUser, err := dependence.GetCurrentUser(c)
+	if err != nil {
+		logrus.Debugf("logout rejected: jwt auth failed for id=%d, err=%v", id, err)
+		ReturnError(c, 1, err.Error())
+		return
+	}
+
+	if currentUser.ID != uint(id) {
+		logrus.Debugf("logout rejected: token user mismatch, token_id=%d, req_id=%d", currentUser.ID, id)
+		ReturnError(c, 1, "token 用户与请求用户不一致")
+		return
+	}
+
+	db := middleware.ResolveDB(c)
+	if db == nil {
+		logrus.Debugf("logout rejected: db is nil for id=%d", id)
+		ReturnError(c, 1, "数据库连接不可用")
+		return
+	}
+
+	// 目前代码库中仅发现 users 与该 id 直接关联，这里先删除 users 记录。
+	res := db.Where("id = ?", id).Delete(&models.User{})
+	if res.Error != nil {
+		logrus.Debugf("logout failed: delete user id=%d error=%v", id, res.Error)
+		ReturnError(c, 1, fmt.Sprintf("注销失败: %v", res.Error))
+		return
+	}
+	if res.RowsAffected == 0 {
+		logrus.Debugf("logout failed: user id=%d not found", id)
+		ReturnError(c, 1, "注销失败: user not found")
+		return
+	}
+
+	logrus.Debugf("logout success: user id=%d", id)
+	ReturnSuccess(c, http.StatusOK, "注销成功", gin.H{"user_id": id})
 }

@@ -1,12 +1,9 @@
 package router
 
 import (
-	"fmt"
-
 	"gin-ranking/controllers"
 	"gin-ranking/logger"
 	"gin-ranking/middleware"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,21 +15,8 @@ func Rrouters() *gin.Engine {
 	// 注入请求级 DB
 	r.Use(middleware.DBMiddleware())
 
-	r.GET("/ping", func(c *gin.Context) {
-
-		c.String(200, fmt.Sprintf("pong"))
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
-	})
-
-	r.GET("/order/info", controllers.OrderController{}.GetOrderInfo)
-
 	user := r.Group("/user")
 	{
-		user.POST("/list", func(s *gin.Context) {
-			s.String(200, fmt.Sprintf("pong"))
-		})
 
 		user.POST("/login", controllers.UserController{}.Login)
 
@@ -40,9 +24,12 @@ func Rrouters() *gin.Engine {
 
 		user.GET("/info/:id", controllers.UserController{}.GetUserInfo)
 
-		user.POST("/add", controllers.UserController{}.Register)
+		user.POST("/register", controllers.UserController{}.Register)
 
 		user.POST("/update/:id", controllers.UserController{}.UpdateUser)
+
+		user.POST("/logout/:id", controllers.UserController{}.LogoutUser)
+
 	}
 	return r
 

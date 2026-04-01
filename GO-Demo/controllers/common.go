@@ -6,8 +6,6 @@ import (
 
 type JsonStruct struct {
 	Code int         `json:"code"`
-	Name string      `json:"name"`
-	Age  int         `json:"age"`
 	Msg  interface{} `json:"msg"`
 	Data interface{} `json:"data"`
 }

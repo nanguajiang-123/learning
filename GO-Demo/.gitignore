@@ -1,0 +1,17 @@
+.env
+*.env
+*.pem
+*.key
+.idea/
+.vscode/
+/log/
+/tmp/
+*.log
+*.sqlite
+*.db
+.DS_Store
+Thumbs.db
+/bin/
+/pkg/
+*.exe
+*.test

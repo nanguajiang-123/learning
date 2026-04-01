@@ -3,13 +3,14 @@ package dependence
 import (
 	"errors"
 	"fmt"
-	"os"
+
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 
+	"gin-ranking/config"
 	"gin-ranking/dao"
 	"gin-ranking/models"
 )
@@ -30,13 +31,14 @@ func getCurrentUser(c *gin.Context) (models.User, error) {
 		tokenString = auth
 	}
 
-	// 从环境读取签名密钥与签名算法，避免硬编码
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
+	settings := config.LoadSettings()
+	if settings.JWTSecret == "" {
 		return zero, errors.New("JWT_SECRET not set")
 	}
-
-	method := os.Getenv("JWT_METHOD")
+	method := settings.JWTMethod
+	if method == "" {
+		return zero, errors.New("JWT_METHOD not set")
+	}
 
 	token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
 		// 校验 token 使用的算法与配置一致，防止 alg 攻击
@@ -47,7 +49,7 @@ func getCurrentUser(c *gin.Context) (models.User, error) {
 		if token.Method.Alg() != expected.Alg() {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(secret), nil
+		return []byte(settings.JWTSecret), nil
 	})
 	if err != nil || !token.Valid {
 		return zero, errors.New("invalid token")
@@ -87,25 +89,21 @@ func getCurrentUser(c *gin.Context) (models.User, error) {
 
 // createToken 根据环境配置生成带过期时间的 JWT
 func CreateToken(userID uint) (string, error) {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
+	settings := config.LoadSettings()
+	if settings.JWTSecret == "" {
 		return "", errors.New("JWT_SECRET not set")
 	}
-
-	method := os.Getenv("JWT_METHOD")
-	if method == "" {
+	if settings.JWTMethod == "" {
 		return "", errors.New("JWT_METHOD not set")
 	}
-
-	// 读取过期时间（秒），支持数字字符串，若有解析错误则使用默认 3600
-	expSec := os.Getenv("JWT_EXPIRE")
-	expire, _ := strconv.Atoi(expSec)
+	expires, _ := strconv.Atoi(settings.JWTExpire)
+	method := settings.JWTMethod
 
 	now := time.Now()
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"iat":     now.Unix(),
-		"exp":     now.Add(time.Duration(expire) * time.Second).Unix(),
+		"exp":     now.Add(time.Duration(expires) * time.Second).Unix(),
 	}
 
 	signingMethod := jwt.GetSigningMethod(method)
@@ -114,5 +112,5 @@ func CreateToken(userID uint) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(signingMethod, claims)
-	return token.SignedString([]byte(secret))
+	return token.SignedString([]byte(settings.JWTSecret))
 }

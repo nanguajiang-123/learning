@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"errors"
+
+	"gin-ranking/core"
 	"gin-ranking/dependence"
 	"gin-ranking/middleware"
 	"gin-ranking/models"
@@ -37,16 +40,21 @@ func (u UserController) GetUserList(c *gin.Context) {
 
 }
 
-func (u UserController) AddUser(c *gin.Context) {
+func (u UserController) Register(c *gin.Context) {
 	email := c.PostForm("email")
 	password := c.PostForm("password")
 	id, err := models.AddUser(email, password)
 	if err != nil {
-		ReturnError(c, 1, "添加用户失败")
+		if errors.Is(err, models.ErrEmailExists) {
+			ReturnError(c, 1, "邮箱已被注册")
+			return
+		}
+		logrus.Errorf("register failed: %v", err)
+		ReturnError(c, 1, "用户注册失败")
 		return
 	}
-	logrus.Debugf("添加用户成功，ID: %d", id)
-	ReturnSuccess(c, http.StatusOK, "添加用户成功", id)
+	logrus.Debugf("用户注册成功，ID: %d", id)
+	ReturnSuccess(c, http.StatusOK, "用户注册成功", id)
 
 }
 
@@ -62,7 +70,7 @@ func (u UserController) Login(c *gin.Context) {
 		return
 	}
 
-	if user.Password != password {
+	if err := core.ComparePassword(user.Password, password); err != nil {
 		logrus.Debugf("login failed, invalid password for: %s", email)
 		ReturnError(c, 1, "用户不存在或密码错误")
 		return

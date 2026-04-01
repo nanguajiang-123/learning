@@ -1,9 +1,16 @@
 package models
 
 import (
+	"errors"
+
+	"gin-ranking/core"
 	"gin-ranking/dao"
 	"time"
+
+	"gorm.io/gorm"
 )
+
+var ErrEmailExists = errors.New("email already registered")
 
 type User struct {
 	ID        uint
@@ -24,13 +31,25 @@ func GetUserTest(id int) (User, error) {
 }
 
 func AddUser(email string, password string) (uint, error) {
+	db := dao.GetDB()
+	var existing User
+	if err := db.Where("email = ?", email).First(&existing).Error; err == nil {
+		return 0, ErrEmailExists
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return 0, err
+	}
+
+	hashed, err := core.HashPassword(password)
+	if err != nil {
+		return 0, err
+	}
+
 	user := User{
 		Email:    email,
-		Password: password,
+		Password: string(hashed),
 	}
-	err := dao.GetDB().Create(&user).Error
-	return user.ID, err
-
+	createErr := db.Create(&user).Error
+	return user.ID, createErr
 }
 
 func UpdateUser(id int, email string) (int, error) {

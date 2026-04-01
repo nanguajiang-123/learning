@@ -40,7 +40,7 @@ func Rrouters() *gin.Engine {
 
 		user.GET("/info/:id", controllers.UserController{}.GetUserInfo)
 
-		user.POST("/add", controllers.UserController{}.AddUser)
+		user.POST("/add", controllers.UserController{}.Register)
 
 		user.POST("/update/:id", controllers.UserController{}.UpdateUser)
 	}

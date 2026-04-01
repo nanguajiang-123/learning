@@ -2,23 +2,22 @@ package config
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 func InitDB() (*gorm.DB, error) {
-	_ = godotenv.Load()
+	setting := LoadSettings()
 	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=%s",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_TIMEZONE"),
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
+		setting.DBHost,
+		setting.DBUser,
+		setting.DBPassword,
+		setting.DBName,
+		setting.DBPort,
+		setting.DBSSLMode,
+		setting.DBTimeZone,
 	)
 
 	db, err := gorm.Open(postgres.New(postgres.Config{

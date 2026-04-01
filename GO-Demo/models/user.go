@@ -19,7 +19,7 @@ func (User) TableName() string {
 
 func GetUserTest(id int) (User, error) {
 	var user User
-	err := dao.Db.Where("id=?", id).First(&user).Error
+	err := dao.GetDB().Where("id=?", id).First(&user).Error
 	return user, err
 }
 
@@ -28,13 +28,13 @@ func AddUser(email string, password string) (uint, error) {
 		Email:    email,
 		Password: password,
 	}
-	err := dao.Db.Create(&user).Error
+	err := dao.GetDB().Create(&user).Error
 	return user.ID, err
 
 }
 
 func UpdateUser(id int, email string) (int, error) {
-	dao.Db.Model(&User{}).Where("id=?", id).Update("email", email)
+	dao.GetDB().Model(&User{}).Where("id=?", id).Update("email", email)
 	return id, nil
 
 }

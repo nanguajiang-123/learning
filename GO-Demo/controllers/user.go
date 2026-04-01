@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"gin-ranking/dao"
 	"gin-ranking/dependence"
 	"gin-ranking/middleware"
 	"gin-ranking/models"
@@ -56,7 +55,8 @@ func (u UserController) Login(c *gin.Context) {
 	password := c.PostForm("password")
 
 	var user models.User
-	if err := dao.Db.Where("email = ?", email).First(&user).Error; err != nil {
+	db := middleware.ResolveDB(c)
+	if err := db.Where("email = ?", email).First(&user).Error; err != nil {
 		logrus.Debugf("login failed, user not found: %s", email)
 		ReturnError(c, 1, "用户不存在或密码错误")
 		return
@@ -82,11 +82,8 @@ func (u UserController) UpdateUser(c *gin.Context) {
 	idstr := c.Param("id")
 	email := c.PostForm("email")
 	id, _ := strconv.Atoi(idstr)
-	// 按需使用延迟事务：优先使用中间件提供的事务（写时才 Begin()），否则使用全局 DB
-	db := dao.Db.WithContext(c.Request.Context())
-	if getDB := middleware.GetLazyDB(c); getDB != nil {
-		db = getDB()
-	}
+	// 使用中间件注入的请求级 DB；若未注入则回退到全局连接池
+	db := middleware.ResolveDB(c)
 
 	if err := db.Model(&models.User{}).Where("id = ?", id).Update("email", email).Error; err != nil {
 		logrus.Errorf("更新用户失败，ID: %d, 错误: %v", id, err)

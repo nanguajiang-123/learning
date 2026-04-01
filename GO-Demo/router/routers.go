@@ -15,6 +15,8 @@ func Rrouters() *gin.Engine {
 	r := gin.Default()
 	// 注册全局 recover 中间件
 	r.Use(logger.RecoverMiddleware())
+	// 注入请求级 DB
+	r.Use(middleware.DBMiddleware())
 
 	r.GET("/ping", func(c *gin.Context) {
 
@@ -32,7 +34,7 @@ func Rrouters() *gin.Engine {
 			s.String(200, fmt.Sprintf("pong"))
 		})
 
-		user.POST("/login", middleware.LazyTxMiddleware(), controllers.UserController{}.Login)
+		user.POST("/login", controllers.UserController{}.Login)
 
 		user.GET("/get", controllers.UserController{}.GetUserList)
 

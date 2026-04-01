@@ -12,6 +12,9 @@ var (
 	err error
 )
 
+func GetDB() *gorm.DB {
+	return Db
+}
 func init() {
 	Db, err = config.InitDB()
 	if err != nil {

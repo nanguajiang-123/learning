@@ -9,17 +9,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
-	"gorm.io/gorm"
 
 	"gin-ranking/dao"
 	"gin-ranking/models"
 )
-
-// getDB 返回全局数据库连接
-func getDB() *gorm.DB {
-	// dao.Db 是 *gorm.DB，直接返回即可
-	return dao.Db
-}
 
 // getCurrentUser 从 Authorization: Bearer <token> 中解析 JWT，返回当前用户
 func getCurrentUser(c *gin.Context) (models.User, error) {
@@ -85,7 +78,7 @@ func getCurrentUser(c *gin.Context) (models.User, error) {
 	}
 
 	var user models.User
-	if err := dao.Db.First(&user, uid).Error; err != nil {
+	if err := dao.GetDB().First(&user, uid).Error; err != nil {
 		return zero, err
 	}
 

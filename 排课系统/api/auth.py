@@ -114,11 +114,12 @@ async def read_me(current_user: Student = Depends(get_current_user)):
 async def forgot_password(req:SignUpModel):
     try:
         student = await Student.get(email=req.email)
+        user=await UserModel.get(email=req.email)
     except DoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # 验证码有效期 10 分钟
-    if not student.code or student.code != req.code or not student.code_sent_at or (datetime.now(timezone.utc) - student.code_sent_at) > timedelta(minutes=10):
+    if not user.code or user.code != req.code or not user.code_sent_at or (datetime.now(timezone.utc) - user.code_sent_at) > timedelta(minutes=10):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification code")
 
     if req.new_password != req.repeat_password:
@@ -133,9 +134,9 @@ async def forgot_password(req:SignUpModel):
     await student.save()
 
     # 验证通过后清除验证码
-    student.code = None
-    student.code_sent_at = None
-    await student.save()
+    user.code = None
+    user.code_sent_at = None
+    await user.save()
 
     return {"message": "Password reset successfully"}
 

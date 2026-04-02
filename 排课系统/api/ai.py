@@ -32,7 +32,7 @@ def get_answer(question: str) -> str:
                 },
                 {
                     "role": "system",
-                    "content": "你是一个教学助理，回答要简洁明了。推荐别人课程时，只需给出课程id，课程标题，课程老师，课程时间段，课程地点以及推荐理由，不要包含其他内容。"
+                    "content": "You are a helpful assistant that provides concise and relevant answers."
                 }
             ],
         })

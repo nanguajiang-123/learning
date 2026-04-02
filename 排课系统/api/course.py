@@ -88,7 +88,7 @@ async def enroll_in_course(course_id: int, current_user: Student = Depends(get_c
                     for rec in course_recommendations2:
                         if not has_conflict(target_sched, rec.schedule):
                             recommendations.append({"course_id": rec.id, "title": rec.title, "schedule": rec.schedule}) 
-                    answer=get_answer(f"学生选课时遇到时间冲突，已选课程：{conflicts}。请推荐一些可选课程：{recommendations}。请给出简短建议。")
+                    answer=get_answer(f"请输出 JSON 数组，最多返回 3 条，每条含字段：id, title, time, reason（理由≤12字）, score（0-100，越高越推荐）。不要额外文本。候选：{recommendations}")
                     if not recommendations:
                         #如无同名或同教师课程，推荐所有无冲突课程
                         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"message": "Schedule conflict", "conflicts": conflicts})

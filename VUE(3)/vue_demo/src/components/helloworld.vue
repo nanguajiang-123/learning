@@ -1,5 +1,7 @@
 <script setup>
 import { ref, computed ,watch} from 'vue'
+import ParentComponent from './ParentComponent.vue'
+
 const count = ref(0)
 function increment() {
     count.value++
@@ -201,8 +203,11 @@ watch([picked,selected],(newx,oldx)=>{
         <input v-model.trim="msg" />
     </div>
 
-
-
+    <!-- 7. 父传子、子传父通信示例 -->
+    <div style="margin-top: 30px; padding: 20px; background: #f0f0f0; border-radius: 8px;">
+        <h2 style="color: #667eea; margin-top: 0;">Props & Emit - Parent-Child Communication</h2>
+        <ParentComponent />
+    </div>
 
 </template>
 
